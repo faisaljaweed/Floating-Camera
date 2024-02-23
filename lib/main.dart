@@ -12,7 +12,7 @@ Future<void> main() async {
 class MyApp extends StatefulWidget {
   final List<CameraDescription> cameras;
 
-  const MyApp({Key? key, required this.cameras}) : super(key: key);
+  const MyApp({super.key, required this.cameras});
 
   @override
   _MyAppState createState() => _MyAppState();
@@ -22,6 +22,11 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   final floating = Floating();
   CameraController? _controller;
   bool isPiPEnabled = false; // State variable for PiP mode attempt
+
+  // Floating window ke liye state variables
+  Offset floatingWindowPosition = Offset(100, 100); // Shuruati position
+  double floatingWindowWidth = 200; // Shuruati width
+  double floatingWindowHeight = 150; // Shuruati height
 
   @override
   void initState() {
@@ -47,7 +52,6 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState lifecycleState) {
     super.didChangeAppLifecycleState(lifecycleState);
     if (lifecycleState == AppLifecycleState.resumed) {
-      // When app resumes (comes back from PiP), show the button again
       setState(() {
         isPiPEnabled = false;
       });
@@ -62,9 +66,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   }
 
   Future<void> enablePiP() async {
-    await floating.enable(aspectRatio: Rational(10, 9));
+    await floating.enable(aspectRatio: const Rational(4, 3));
     setState(() {
-      isPiPEnabled = true; // Assume PiP mode is attempted/enabled
+      isPiPEnabled = true;
     });
   }
 
@@ -72,16 +76,22 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
-        body: _controller != null && _controller!.value.isInitialized
-            ? Container(
-                width: double.infinity,
-                height: double.infinity,
-                child: CameraPreview(_controller!),
-              )
-            : Center(
-                child:
-                    const Text("Loading Camera...", key: Key('loadingCamera')),
-              ),
+        body: Stack(
+          children: <Widget>[
+            // Camera Preview
+            _controller != null && _controller!.value.isInitialized
+                ? SizedBox(
+                    width: double.infinity,
+                    height: double.infinity,
+                    child: CameraPreview(_controller!),
+                  )
+                : const Center(
+                    child: Text("Loading Camera...", key: Key('loadingCamera')),
+                  ),
+
+            // Floating Window
+          ],
+        ),
         floatingActionButton: !isPiPEnabled
             ? FutureBuilder<bool>(
                 future: floating.isPipAvailable,
